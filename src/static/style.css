@@ -1,0 +1,152 @@
+h4 {
+  margin-top: 0;
+}
+
+#app {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+#tasks-view table {
+  font-size: 20px;
+  table-layout: fixed;
+  word-wrap: break;
+}
+
+td, tr {
+  min-height: 51px;
+  max-height: 51px;
+  padding: 0px;
+}
+
+td.cell {
+  vertical-align: center;
+  text-align: center;
+  padding: 2px;
+  overflow: hidden;
+}
+
+td.cell.time_required {
+  width: 1%;
+}
+
+th.cell {
+  text-align: center;
+  vertical-align: center;
+}
+
+td.Low {
+  color: #54E37A;
+  font-weight: bold;
+}
+
+td.Medium {
+  color: #EDED2F;
+  font-weight: bold;
+}
+
+td.High {
+  color: #FC5151;
+  font-weight: bold;
+}
+
+td.cell > input {
+  text-align: center;
+}
+
+#add-task {
+  margin-top: 15px;
+  margin-bottom: 30px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 1200px;
+  /*margin: 15px auto 30px auto;*/
+}
+
+#add-task input {
+  margin-right: 10px;
+  font-size: 20px;
+  height: 35px;
+}
+
+#add-task .styled-select {
+  margin-right: 10px;
+  font-size: 20px;
+  height: 35px;
+}
+
+#add-task .task {
+  width: 300px;
+}
+
+#add-task .time_required {
+  width: 150px;
+}
+
+.add-task-form {
+  width: 1000px;
+  margin: 0 auto;
+}
+
+#tasks-view.tasks {
+  margin: 0;
+}
+
+.tasks {
+  min-height: 540px;
+}
+
+div.sort {
+  font-size: 20px;
+  margin-left: 10px;
+}
+
+div.filter {
+  width: 900px;
+  margin: 0 auto;
+}
+
+#filter-tasks {
+  margin-left: 20px;
+}
+
+div.filter input {
+  margin-right: 10px;
+  font-size: 20px;
+  height: 35px;
+}
+
+div.filter .priority {
+  width: 100px;
+}
+
+div.filter .module,
+div.filter .task,
+div.filter .tech {
+  width: 150px;
+}
+
+.radio {
+  margin-right: 10px;
+}
+
+.pages {
+  padding: 0 35%;
+}
+
+.pagination {
+  margin-top: 5px;
+  /*margin-bottom: 10px;*/
+}
+
+#play-form {
+  hidden: true;
+}
+
+button.save {
+  margin-top: 29px;
+}
+
+.image-form {
+  margin-top: 10px;
+}

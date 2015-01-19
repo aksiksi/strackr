@@ -1,0 +1,319 @@
+<html>
+  <head>
+    <title>STrackr</title>
+
+    <link rel="stylesheet" type="text/css" href="static/bootstrap.css">
+
+    <script type="text/javascript" src="js/libs/jquery.js"></script>
+    <script type="text/javascript" src="js/libs/underscore.js"></script>
+    <script type="text/javascript" src="js/libs/backbone.js"></script>
+    <script type="text/javascript" src="js/libs/mustache.js"></script>
+    <script type="text/javascript" src="js/libs/handlebars-v2.0.0.js"></script>
+    <script type="text/javascript" src="js/libs/papaparse.js"></script>
+    <script type="text/javascript" src="js/init.js"></script>
+
+    <!-- Mustache templates -->
+    <script type="text/x-handlebars-template" id="add-task-template">
+      <select class="form-control module styled-select">
+        {{#each modules}}<option value="{{ this }}">{{ this }}</option>{{/each}}
+      </select>
+
+      <select class="form-control tech styled-select">
+        {{#each techs}}<option value="{{ this.Technician }}">{{ this.Technician }}</option>{{/each}}
+      </select>
+
+      <input type="text" placeholder="Task" class="task form-control" />
+      <select class="form-control priority styled-select">
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
+      <input type="text" placeholder="Time required" class="time_required form-control" />
+      <button type="button" class="btn btn-default add">Add</button>
+    </script>
+
+    <script type="text/x-handlebars-template" id="task-template">
+      <td class="cell">{{ module }}</td>
+      <td class="cell">{{ technician }}</td>
+      <td class="cell">{{ task }}</td>
+      <td class="cell {{ priority }}">{{ priority }}</td>
+      <td class="cell">{{ time_required }}</td>
+      <td class="cell"><input type="checkbox" {{#completed}}checked="checked"{{/completed}} class="completed" /></td>
+      <td class="cell"><button type="button" class="btn btn-default edit">Edit</button></td>
+      <td class="cell"><button type="button" class="btn btn-default remove">Remove</button></td>
+    </script>
+
+    <script type="text/x-handlebars-template" id="edit-task-template">
+      <td>
+        <select class="form-control module">
+          {{#selectedModule module}}<option value="{{ module }}" {{#yes}}selected="selected"{{/yes}}>{{ module }}</option>{{/selectedModule}}
+        </select>
+      </td>
+      <td>
+        <select class="form-control tech">
+          {{#selectedTech technician}}<option value="{{ tech }}" {{#yes}}selected="selected"{{/yes}}>{{ tech }}</option>{{/selectedTech}}
+        </select>
+      </td>
+
+      <td><input type="text" value="{{ task }}" class="task form-control" /></td>
+      <td>
+        <select class="form-control priority">
+          {{#selectedPriority priority}}<option value="{{ priority }}" {{#yes}}selected="selected"{{/yes}}>{{ priority }}</option>{{/selectedPriority}}
+        </select>
+      </td>
+      <td><input type="text" value="{{ time_required }}" class="time_required form-control" /></td>
+      <td class="cell"><input type="checkbox" {{#completed}}checked="checked"{{/completed}} class="completed-editing"></td>
+      <td class="cell"><button type="button" class="btn btn-default update">Update</button></td>
+      <td class="cell"><button type="button" class="btn btn-default back">Back</button></td>
+    </script>
+
+    <script type="text/x-handlebars-template" id="filter-template">
+      <h3>Filter</h3>
+      <input type="text" class="module form-control" placeholder="Module" />
+      <input type="text" class="tech form-control" placeholder="Technician"/>
+      <input type="text" class="task form-control" placeholder="Task" />
+      <input type="text" class="priority form-control" placeholder="Priority"/>
+
+      <button type="button" class="btn btn-default clr">Clear</button>
+    </script>
+
+    <script type="text/x-handlebars-template" id="tasks-view-template">
+      <div class="col-md-12 col-lg-12">
+        <div class="tasks">
+          <table class="table" style="margin: 0px;">
+            <thead>
+              <tr>
+                <th class="cell">Module</th>
+                <th class="cell">Technician</th>
+                <th class="cell">Task</th>
+                <th class="cell">Priority</th>
+                <th class="cell">Time Required</th>
+                <th class="cell">Completed</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pages">
+        <ul class="pagination pagination-lg">
+          <li><a href="#" class="first">&laquo;</a></li>
+          {{#each pages}}<li {{#this.active}}class="active"{{/this.active}}><a href="#">{{ this.page }}</a></li>{{/each}}
+          <li><a href="#" class="last">&raquo;</a></li>
+        </ul>
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="sort-template">
+      <h3>Sort by</h3>
+
+      <div class="radio">
+        <label>Date: </label>
+        <input name="sort-radio" type="radio" value="date" checked />
+      </div>
+      <div class="radio">
+        <label>Priority: </label>
+        <input name="sort-radio" type="radio" value="priority" />
+      </div>
+      <div class="radio">
+        <label>Completed: </label>
+        <input name="sort-radio" type="radio" value="completed" />
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="index-template">
+      <div class="row">
+        <div class="col-md-12">
+          <div id="add-task"></div>
+        </div>
+      </div>
+
+      <div id="tasks" class="row">
+      </div>
+
+      <div id="view-settings" class="row">
+        <div class="col-md-8">
+          <div id="filter-tasks"></div>
+        </div>
+        <div class="col-md-4">
+          <div id="sort-tasks"></div>
+        </div>
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="config-template">
+      <div class="row">
+        <div class="col-md-1"></div>
+
+        <div class="col-md-2">
+          <h3>Prune Tasks</h3>
+        </div>
+
+        <div class="col-md-8">
+          <p>Delete tasks for a technician with a optional date specified. Everything added before the chosen date will be pruned.</p>
+          <p>The default date is set to <strong>two weeks</strong> before now.</p>
+          <form class="form form-inline">
+            <select class="form-control tech">
+              {{#each techs}}<option value="{{ this.Technician }}">{{ this.Technician }}</option>{{/each}}
+              <option value="All">All</option>
+            </select>
+            <input type="date" class="date form-control" />
+            <button type="button" class="btn btn-default prune">Prune</button>
+          </form>
+        </div>
+
+        <div class="col-md-1"></div>
+      </div>
+
+      <div class="row" style="margin-top: 30px;">
+        <div class="col-md-1"></div>
+
+        <div class="col-md-2">
+          <h3>Export as CSV</h3>
+        </div>
+
+        <div class="col-md-4" style="padding-top: 20px;">
+          <input type="file" class="form-control export" nwsaveas="export.csv" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 30px;">
+        <div class="col-md-1"></div>
+
+        <div class="col-md-11">
+          <h3>Directory Settings</h3>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="col-md-1"></div>
+
+        <div class="col-md-4">
+          <h4>Technicians CSV</h4>
+          <p>The file should have only two columns. The first is the technician name and the second the team each technician is on.</p>
+          <p><strong>Example:</strong></p>
+          <table class="table">
+            <tr>
+              <td>James</td>
+              <td>Electronics</td>
+            </tr>
+            <tr>
+              <td>Ahmed</td>
+              <td>Mechanical</td>
+            </tr>
+          </table>
+          <input type="file" class="form-control techs-file" />
+        </div>
+
+        <div class="col-md-4">
+          <h4>Images Directory</h4>
+          <p>Select a directory of images to use the <strong>Images</strong> feature. The feature allows looping through the images and displaying them on the page with a specified delay.</p>
+          <input type="file" class="form-control images-dir" webkitdirectory directory />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 30px;">
+        <div class="col-md-1"></div>
+
+        <div class="col-md-11">
+          <h3>Technician Stats</h3>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1"></div>
+
+        <div class="col-md-10">
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="cell">Technician</th>
+                <th class="cell">Team</th>
+                <th class="cell">Total tasks</th>
+                <th class="cell">Completed</th>
+                <th class="cell">Average completion time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each stats}}
+                <tr>
+                  <td class="cell">{{ this.Technician }}</td>
+                  <td class="cell">{{ this.Team }}</td>
+                  <td class="cell">{{ this.all }}</td>
+                  <td class="cell">{{ this.percent_completed }}%</td>
+                  <td class="cell">{{ this.avg_completion }}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="col-md-1"></div>
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="image-view-template">
+      <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-6">
+          <p style="font-size: 20px;">Please place all images in selected directory in <a href="#/config">Config</a>, then click Start. You can define a interval for image change as well.</p>
+        </div>
+        <div class="col-md-4">
+          <form class="form form-inline image-form">
+            <input type="text" class="form-control interval" placeholder="Interval" />
+            <button type="button" class="btn btn-default start">Start</button>
+            <button type="button" class="btn btn-default reset">Reset</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <img class="img-responsive image" style="height: 950px; margin: 0 auto;" />
+        </div>
+      </div>
+    </script>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-inverse" role="navigation">
+      <div class="container">
+        <div id="play-form">
+          <form class="navbar-form navbar-right">
+            <input type="text" style="width: 10rem;" class="duration form-control" placeholder="Duration" />
+            <button type="button" style="width: 12rem;" class="play btn btn-primary">Play!</button>
+          </form>
+        </div>
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <span class="navbar-brand" style="font-size: 3rem">STrackr</a>
+        </div>
+
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav" style="font-size: 20px;">
+            <li><a href="#">Home</a></li>
+            <li><a href="#/images">Images</a></li>
+            <li><a href="#/config">Config</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="app">
+    </div>
+
+    <script type="text/javascript" src="js/bundle.js"></script>
+    <script type="text/javascript" src="js/looper.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+  </body>
+
+</html>

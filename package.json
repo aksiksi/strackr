@@ -1,0 +1,11 @@
+{
+  "name": "do-my-build",
+  "version": "0.0.1",
+  "description": "Just for building.",
+  "author": "Assil Ksiksi",
+  "private": true,
+  "dependencies": {
+    "browserify": "^8.0.0",
+    "node-webkit-builder": "^1.0.4"
+  }
+}
